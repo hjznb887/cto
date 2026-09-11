@@ -3,14 +3,15 @@ import { Stock } from '../types/stock';
 
 interface StockListProps {
   stocks: Stock[];
-  onRemove?: (ticker: string) => void;
+  onRemove?: (symbol: string) => void;
+  onSelect?: (symbol: string) => void;
   title?: string;
 }
 
-type SortKey = 'ticker' | 'name' | 'price' | 'changePercent';
+type SortKey = 'symbol' | 'name' | 'price' | 'changePercent';
 
-const StockList: React.FC<StockListProps> = ({ stocks, onRemove, title }) => {
-  const [sortKey, setSortKey] = useState<SortKey>('ticker');
+const StockList: React.FC<StockListProps> = ({ stocks, onRemove, onSelect, title }) => {
+  const [sortKey, setSortKey] = useState<SortKey>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const sortedStocks = [...stocks].sort((a, b) => {
@@ -42,7 +43,7 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, title }) => {
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid #555' }}>
-            <th onClick={() => toggleSort('ticker')} style={{ cursor: 'pointer', padding: '10px' }}>Ticker</th>
+            <th onClick={() => toggleSort('symbol')} style={{ cursor: 'pointer', padding: '10px' }}>Symbol</th>
             <th onClick={() => toggleSort('name')} style={{ cursor: 'pointer', padding: '10px' }}>Name</th>
             <th onClick={() => toggleSort('price')} style={{ cursor: 'pointer', padding: '10px', textAlign: 'right' }}>Price</th>
             <th onClick={() => toggleSort('changePercent')} style={{ cursor: 'pointer', padding: '10px', textAlign: 'right' }}>Change %</th>
@@ -51,8 +52,13 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, title }) => {
         </thead>
         <tbody>
           {sortedStocks.map((stock) => (
-            <tr key={stock.ticker} style={{ borderBottom: '1px solid #444' }}>
-              <td style={{ padding: '10px' }}><strong>{stock.ticker}</strong></td>
+            <tr 
+              key={stock.symbol} 
+              style={{ borderBottom: '1px solid #444', cursor: onSelect ? 'pointer' : 'default' }}
+              onClick={() => onSelect?.(stock.symbol)}
+              className="hover:bg-slate-800 transition-colors"
+            >
+              <td style={{ padding: '10px' }}><strong>{stock.symbol}</strong></td>
               <td style={{ padding: '10px' }}>{stock.name}</td>
               <td style={{ padding: '10px', textAlign: 'right' }}>${stock.price.toFixed(2)}</td>
               <td style={{ 
@@ -64,7 +70,13 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, title }) => {
               </td>
               {onRemove && (
                 <td style={{ padding: '10px' }}>
-                  <button onClick={() => onRemove(stock.ticker)} style={{ background: 'none', border: 'none', color: '#ff5252', cursor: 'pointer' }}>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(stock.symbol);
+                    }} 
+                    style={{ background: 'none', border: 'none', color: '#ff5252', cursor: 'pointer' }}
+                  >
                     Remove
                   </button>
                 </td>
