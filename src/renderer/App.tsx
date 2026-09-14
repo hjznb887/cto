@@ -6,6 +6,7 @@ import StockDetail from './components/StockDetail';
 import AlertEditor from './components/AlertEditor';
 import type { AlertRule } from './components/AlertEditor';
 import { getWatchlistStocks } from './services/stockService';
+import { loadWatchlist, saveWatchlist, loadAlerts, saveAlerts } from './services/persistence';
 import { Stock } from './types/stock';
 import './index.css';
 
@@ -218,10 +219,11 @@ function App() {
     const fetchInitialData = async () => {
       try {
         const stocks = await getWatchlistStocks();
-        setWatchlist(stocks);
-        // Load mock alerts from localStorage
-        const savedAlerts = localStorage.getItem('stockall_alerts');
-        if (savedAlerts) setAlerts(JSON.parse(savedAlerts));
+        // A saved watchlist wins over the demo defaults: once the user has
+        // curated their list, reloading should not resurrect the seed data.
+        const saved = loadWatchlist();
+        setWatchlist(saved.length > 0 ? saved : stocks);
+        setAlerts(loadAlerts<AlertRule>());
       } catch (err) {
         setError('Failed to fetch watchlist stocks.');
         console.error(err);
@@ -237,17 +239,19 @@ function App() {
     const symbol = typeof symbolOrStock === 'string' ? symbolOrStock : symbolOrStock.symbol;
     if (watchlist.some(s => s.symbol === symbol)) return;
 
-    if (typeof symbolOrStock === 'object') {
-      setWatchlist(prev => [...prev, symbolOrStock]);
-    } else {
-      setWatchlist(prev => [...prev, { 
-        symbol, name: symbol, price: 0, change: 0, changePercent: 0, exchange: 'Unknown' 
-      }]);
-    }
+    const next = typeof symbolOrStock === 'object'
+      ? [...watchlist, symbolOrStock]
+      : [...watchlist, {
+          symbol, name: symbol, price: 0, change: 0, changePercent: 0, exchange: 'Unknown'
+        }];
+    setWatchlist(next);
+    saveWatchlist(next);
   };
 
   const handleRemoveStock = (symbol: string) => {
-    setWatchlist(prev => prev.filter(s => s.symbol !== symbol));
+    const next = watchlist.filter(s => s.symbol !== symbol);
+    setWatchlist(next);
+    saveWatchlist(next);
   };
 
   const handleSaveAlert = (rule: AlertRule) => {
@@ -257,19 +261,19 @@ function App() {
       ? alerts.map(a => a.id === rule.id ? rule : a)
       : [...alerts, rule];
     setAlerts(newAlerts);
-    localStorage.setItem('stockall_alerts', JSON.stringify(newAlerts));
+    saveAlerts(newAlerts);
   };
 
   const handleDeleteAlert = (id: string) => {
     const newAlerts = alerts.filter(a => a.id !== id);
     setAlerts(newAlerts);
-    localStorage.setItem('stockall_alerts', JSON.stringify(newAlerts));
+    saveAlerts(newAlerts);
   };
 
   const handleToggleAlert = (id: string) => {
     const newAlerts = alerts.map(a => a.id === id ? { ...a, active: !a.active } : a);
     setAlerts(newAlerts);
-    localStorage.setItem('stockall_alerts', JSON.stringify(newAlerts));
+    saveAlerts(newAlerts);
   };
 
   return (

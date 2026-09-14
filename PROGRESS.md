@@ -3,7 +3,7 @@
 > 这份文件是**跨会话的记忆**。AI 做活做到一半断线（限额 / 上下文丢失）是常态，
 > 每次新会话开始前，先读这份文件，再动手。
 >
-> **最后更新：2026-09-14（第三轮）**
+> **最后更新：2026-09-14（第四轮）**
 
 ---
 
@@ -35,12 +35,15 @@
 | TypeScript 类型检查 | ✅ 通过 | `npx tsc --noEmit` 零错误 |
 | 前端测试 | ✅ 21/21 通过 | `AlertEditor` 9 + `StockDetail` 7 + `App` 5 |
 | 后端测试 | ✅ 42/42 通过 | 已修复（见第五节） |
-| 全部测试 | ✅ **63/63 通过** | 5 个测试文件全绿 |
+| 测试 | ✅ **73/73 通过** | 6 个测试文件全绿 |
+| Electron 桌面启动 | ✅ 实测通过 | 无头启动，DOM 渲染出完整界面 |
+| 自选股持久化 | ✅ 已接入 | 实测：删除后写入 localStorage |
 | 构建 | ✅ 通过 | `npx vite build` 产出 CSS 20.22 KB + JS 577 KB |
 | ESLint | ✅ 零错误 | 14 → 0（2026-09-14 第三轮） |
 | 界面渲染 | ✅ 真实渲染 | 无头浏览器 DOM 中出现 StockAll / My Watchlist 等 |
 | 样式 | ✅ Tailwind 生效 | `.text-6xl → 3.75rem`、`.rounded-3xl → 1.5rem` 已确认 |
 | 死代码 | ✅ 已清理 | `app/` 7 个死路由已删除（2026-09-14 第三轮） |
+| `.gitignore` 隐患 | ✅ 已修 | 曾忽略 `lib/`，会静默丢弃新增源文件（第四轮） |
 
 ### 已完成的功能
 
@@ -60,14 +63,24 @@
 ### P1 —— 影响观感与质量
 
 3. ~~**ESLint 14 个错误**~~ ✅ **已修复（2026-09-14 第三轮）**
-4. **`electron:dev` 脚本可能有问题。** 它等的是 `http://localhost:5173`，但实际 dev server 端口取决于 Vite 配置，需实测确认。
+4. ~~**`electron:dev` 脚本可能有问题。**~~ ✅ **已实测（2026-09-14 第四轮）**
+   生产模式启动验证通过：`electron.exe .` 加载 `dist/` 后窗口正常创建，渲染进程
+   输出完整界面（`h1` 60px/900 字重、`section` 圆角 24px、5 个可交互元素）。
+   **注意**：`electron:dev` 开发脚本仍等待 5173 端口，而 Vite 默认 5173——但
+   `vite.config.ts` 未显式设置 `server.port`，若端口被占用会漂移导致 `wait-on` 卡住。
+   临时需要开发模式时可用 `npx vite --config vite.preview.config.ts` 预览界面。
 5. **`vite-plugin-electron` 下根路径 `/` 返回 404**，`/index.html` 正常。不影响实际使用，但值得记一笔。
 
 ### P2 —— 结构问题
 
-6. **没有持久化层在用。** 写好的 `lib/stockall/persistence.ts`（16 KB，带测试）**在前端完全没被调用**，自选股只存在 React state 里，刷新就丢。
+6. ~~**没有持久化层在用。**~~ ✅ **已接入（2026-09-14 第四轮）**
+   新增 `src/renderer/services/persistence.ts`，把自选股与预警写入 localStorage。
+   实测：删除股票后 `stockall_watchlist` 立即写入。**注意**：这是浏览器层持久化，
+   与 `lib/stockall/persistence.ts`（SQLite/内存 store）是两套方案，后者仍未接入。
 7. **构建产物偏大**：单 chunk 577 KB，未做代码分割。
 8. **`AlertRule` 类型此前在两处重复定义**（`App.tsx` 与 `AlertEditor.tsx`），已统一为从 `AlertEditor` 导出。`StockDetail.tsx` 也存在同类问题（`onAddToWatchlist: (stock: any)`），已改用 `Stock` 类型。
+9. **Electron 安全配置偏松**：`nodeIntegration: true` + `contextIsolation: false`，
+   且无 CSP。开发够用，但发布前应收紧（`contextIsolation: true` + preload 桥接）。
 
 ---
 
@@ -83,6 +96,51 @@
 ---
 
 ## 五、已做过的改动记录
+
+### 2026-09-14（AI 修复 · 第四轮）
+
+**目标**：验证 Electron 能否真正启动；把持久化接进前端。
+
+**1. Electron 启动验证 —— 通过**
+
+生产模式实测（无头启动，非人工点击）：
+- 进程正常创建并保持运行，渲染进程有 console 输出
+- DOM 探针结果：`root` 有 1 个子节点、`h1` 为 60px/900 字重、`section` 背景
+  `rgba(30,41,59,0.4)` 圆角 24px、5 个可交互元素
+- 界面文本完整：StockAll / Your intelligent global market companion / Search Markets /
+  My Watchlist / AAPL / GOOGL / MSFT
+
+→ **结论：它确实是一个能跑起来的桌面应用**，不只是「构建成功」。
+
+**2. 发现并修复 `.gitignore` 定时炸弹**
+
+`.gitignore` 里写着 `lib/`，但 `lib/stockall/` 下有 6 个被跟踪的源文件。
+Git 只忽略**未跟踪**文件，所以现有代码安然无恙——**但任何新增到 `lib/` 的文件都会被静默丢弃**。
+`app/` 也已在忽略列表里（该目录已在第三轮删除）。
+两个条目都已移除，并加了注释说明原因。
+
+*验证*：在 `lib/stockall/` 下新建测试文件，`git status` 能正常识别 → 修复生效。
+
+**3. 接入持久化**
+
+新增 `src/renderer/services/persistence.ts`：
+- 自选股存 `stockall_watchlist`，预警存 `stockall_alerts`
+- **带容错**：JSON 损坏、非数组、存储配额超限 —— 一律降级为空数据，不抛异常
+- `loadWatchlist()` 对外只返回 `Stock` 形状，内部排序用的 `order` 字段在出口剥离
+
+改造 `App.tsx`：
+- 启动时优先读**已保存的自选股**，而不是永远用 mock 默认值
+  （否则用户精心整理过的列表，一刷新就被 3 支演示股覆盖）
+- 增删改三处操作全部落盘
+- 移除原先散落的 `localStorage.setItem('stockall_alerts', ...)` 直接调用
+
+新增 10 个测试，覆盖：往返一致性、顺序保持、损坏数据、非数组、写入失败降级。
+
+**端到端验证**（Electron 内真实执行）：
+点击 Remove 删除 1 支股票 → 表格由 3 行变 2 行 → `stockall_watchlist` 立即写入
+且内容正确。**持久化链路打通。**
+
+**门禁**：TypeScript 0 错误 | ESLint 0 错误 | 测试 **73/73** | 构建通过
 
 ### 2026-09-14（AI 修复 · 第三轮）
 
@@ -195,7 +253,9 @@ npx vite --config vite.preview.config.ts
 - [x] 修 `lib/stockall` 两个坏掉的测试 ~~（2026-09-14 第二轮，63/63 通过）~~
 - [x] 删除 7 个死路由文件 ~~（2026-09-14 第三轮）~~
 - [x] 清掉 14 个 ESLint 错误 ~~（2026-09-14 第三轮，14 → 0）~~
-- [ ] 确认 `electron:dev` 能真正启动应用
-- [ ] 把 `persistence.ts` 接进前端，让自选股能持久化
+- [x] 确认 `electron:dev` 能真正启动应用 ~~（2026-09-14 第四轮，生产模式实测通过）~~
+- [x] 把持久化接进前端，让自选股能持久化 ~~（2026-09-14 第四轮，localStorage）~~
 - [ ] 修 `generateMock*` 的随机性问题（缓存已修，但 mock 数据本身仍是随机的）
+- [ ] 收紧 Electron 安全配置（`contextIsolation: true` + CSP）
+- [ ] 代码分割，降低 577 KB 单 chunk
 - [ ] ⏸ **暂停** —— 回到第四节确认数据源方案后再继续
