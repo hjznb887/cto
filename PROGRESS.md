@@ -3,7 +3,7 @@
 > 这份文件是**跨会话的记忆**。AI 做活做到一半断线（限额 / 上下文丢失）是常态，
 > 每次新会话开始前，先读这份文件，再动手。
 >
-> **最后更新：2026-09-14（第二轮）**
+> **最后更新：2026-09-14（第三轮）**
 
 ---
 
@@ -37,10 +37,10 @@
 | 后端测试 | ✅ 42/42 通过 | 已修复（见第五节） |
 | 全部测试 | ✅ **63/63 通过** | 5 个测试文件全绿 |
 | 构建 | ✅ 通过 | `npx vite build` 产出 CSS 20.22 KB + JS 577 KB |
-| ESLint | ❌ 14 个错误 | 全是 `@typescript-eslint/no-explicit-any` |
+| ESLint | ✅ 零错误 | 14 → 0（2026-09-14 第三轮） |
 | 界面渲染 | ✅ 真实渲染 | 无头浏览器 DOM 中出现 StockAll / My Watchlist 等 |
 | 样式 | ✅ Tailwind 生效 | `.text-6xl → 3.75rem`、`.rounded-3xl → 1.5rem` 已确认 |
-| 死代码 | ❌ 7 个文件 | `app/api/stockall/*/route.ts` 无任何引用 |
+| 死代码 | ✅ 已清理 | `app/` 7 个死路由已删除（2026-09-14 第三轮） |
 
 ### 已完成的功能
 
@@ -55,15 +55,11 @@
 
 ### P0 —— 会直接影响使用
 
-1. ~~**后端两个测试套件是坏的。**~~ ✅ **已修复（2026-09-14 第二轮）**
-
-2. **7 个死路由文件。**
-   `app/api/stockall/` 下 7 个 `route.ts` 是 **Next.js 约定**的文件，但项目里根本没有 Next.js 依赖。这些文件从写下那天起就没被执行过。**已确认无任何引用。**
-   → 决策：删掉，或明确接进某个后端。
+（当前无未解决的 P0 问题）
 
 ### P1 —— 影响观感与质量
 
-3. **ESLint 14 个错误**，全部是 `any` 类型。集中在 `App.tsx`、`StockDetail.tsx`、`setupTests.ts`。
+3. ~~**ESLint 14 个错误**~~ ✅ **已修复（2026-09-14 第三轮）**
 4. **`electron:dev` 脚本可能有问题。** 它等的是 `http://localhost:5173`，但实际 dev server 端口取决于 Vite 配置，需实测确认。
 5. **`vite-plugin-electron` 下根路径 `/` 返回 404**，`/index.html` 正常。不影响实际使用，但值得记一笔。
 
@@ -71,6 +67,7 @@
 
 6. **没有持久化层在用。** 写好的 `lib/stockall/persistence.ts`（16 KB，带测试）**在前端完全没被调用**，自选股只存在 React state 里，刷新就丢。
 7. **构建产物偏大**：单 chunk 577 KB，未做代码分割。
+8. **`AlertRule` 类型此前在两处重复定义**（`App.tsx` 与 `AlertEditor.tsx`），已统一为从 `AlertEditor` 导出。`StockDetail.tsx` 也存在同类问题（`onAddToWatchlist: (stock: any)`），已改用 `Stock` 类型。
 
 ---
 
@@ -86,6 +83,49 @@
 ---
 
 ## 五、已做过的改动记录
+
+### 2026-09-14（AI 修复 · 第三轮）
+
+**目标**：删除死代码、清零 ESLint 错误。
+
+**1. 删除 `app/` 目录（7 个死路由，11.9 KB）**
+
+删除前做了双重核实：
+- 全仓库搜索 `app/api`、`app/stockall`、`from 'app'` → **零引用**
+- `tsconfig.json` 的 `include` 仅为 `["src"]` → **`app/` 从未参与编译**
+
+确认是绝对的死代码后删除。删除后重跑测试：**63/63 仍全绿**。
+
+**2. 清零 ESLint（14 → 0）**
+
+不是用 `eslint-disable` 压制，而是逐个用真实类型替换：
+
+| 文件 | 原问题 | 处理 |
+|---|---|---|
+| `persistence.test.ts` | `AlertConfig` 未使用 | 删除该导入 |
+| `persistence.ts` | `Timeframe` 未使用 | 删除该导入 |
+| `stock-service.test.ts` | `vi` 未使用 | 删除该导入 |
+| `AlertEditor.tsx` ×2 | `params: any` | 新增并导出 `AlertParams` 接口 |
+| `App.tsx` ×2 | `AlertRule` 重复定义、`stock: any` | 改为从 `AlertEditor` 导入类型；`any` → `Stock` |
+| `StockDetail.tsx` | `stock: any` | 改用 `Stock` 类型 |
+| `StockDetail.test.tsx` ×4 | `require()` + 3 处 `any` | 改用 ESM `import`；`any` → `React.ReactNode` / `unknown` |
+| `setupTests.ts` ×2 | `(window as any)` | 改用 `as unknown as Record<string, unknown>` |
+
+**3. 类型化过程中发现并修复一个潜在崩溃**
+
+把 `any` 换成真实类型后，TypeScript 立即报出：
+
+```
+App.tsx(109): 'alert.params.direction' is possibly 'undefined'
+App.tsx(111): 'alert.params.direction' is possibly 'undefined'
+```
+
+原因：`AlertParams` 的字段本应是**可选的**（不同规则类型只用其中几个字段）。修正为可选后，暴露出 `alert.params.direction.toUpperCase()` 在字段缺失时会**直接抛异常**。
+已加空值兜底：`(alert.params.direction ?? '').toUpperCase()`。
+
+**这正说明类型不是形式主义**——`any` 掩盖了两个真实的崩溃点。
+
+**验证**：四关全过 —— TypeScript 零错误、ESLint 零错误、测试 63/63、构建通过。
 
 ### 2026-09-14（AI 修复 · 第二轮）
 
@@ -152,9 +192,9 @@ npx vite --config vite.preview.config.ts
 
 ## 七、下一步（建议顺序）
 
-- [x] 修 `lib/stockall` 两个坏掉的测试 ~~（2026-09-14 完成，63/63 通过）~~
-- [ ] 删除 7 个死路由文件（或明确其归属）
-- [ ] 清掉 14 个 ESLint 错误
+- [x] 修 `lib/stockall` 两个坏掉的测试 ~~（2026-09-14 第二轮，63/63 通过）~~
+- [x] 删除 7 个死路由文件 ~~（2026-09-14 第三轮）~~
+- [x] 清掉 14 个 ESLint 错误 ~~（2026-09-14 第三轮，14 → 0）~~
 - [ ] 确认 `electron:dev` 能真正启动应用
 - [ ] 把 `persistence.ts` 接进前端，让自选股能持久化
 - [ ] 修 `generateMock*` 的随机性问题（缓存已修，但 mock 数据本身仍是随机的）

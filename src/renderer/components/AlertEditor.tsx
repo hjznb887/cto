@@ -1,11 +1,27 @@
 import React, { useState } from 'react';
 import StockSearch from './StockSearch';
 
-interface AlertRule {
+/**
+ * Parameter bag for alert rules.
+ * All fields optional: only the params relevant to the selected rule type
+ * are meaningful (e.g. `threshold` for price_threshold, `rsiLevel` for rsi_level).
+ */
+export interface AlertParams {
+  threshold?: number;
+  direction?: string;
+  shortPeriod?: number;
+  longPeriod?: number;
+  rsiLevel?: number;
+  volumeMultiplier?: number;
+  percentChange?: number;
+  minutes?: number;
+}
+
+export interface AlertRule {
   id: string;
   symbol: string;
   type: string;
-  params: any;
+  params: AlertParams;
   notifications: {
     sound: boolean;
     toast: boolean;
@@ -43,7 +59,7 @@ const DEFAULT_PARAMS = {
 const AlertEditor: React.FC<AlertEditorProps> = ({ initialSymbol = '', initialRule, onSave, onCancel }) => {
   const [symbol, setSymbol] = useState(initialRule?.symbol ?? initialSymbol);
   const [type, setType] = useState(initialRule?.type ?? ALERT_TYPES[0].id);
-  const [params, setParams] = useState<any>({ ...DEFAULT_PARAMS, ...(initialRule?.params ?? {}) });
+  const [params, setParams] = useState<AlertParams>({ ...DEFAULT_PARAMS, ...(initialRule?.params ?? {}) });
   const [notifications, setNotifications] = useState(initialRule?.notifications ?? {
     sound: true,
     toast: true,

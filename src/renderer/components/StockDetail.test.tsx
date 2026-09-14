@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import StockDetail from './StockDetail';
 
 // Mock recharts primitives so the component can render in jsdom without layout
 vi.mock('recharts', () => {
-  const React = require('react');
-  const MockBox = ({ children, ...rest }: any) =>
+  const MockBox = ({ children, ...rest }: { children?: React.ReactNode } & Record<string, unknown>) =>
     React.createElement('div', { 'data-testid': 'chart', ...rest }, children);
   return {
     ResponsiveContainer: MockBox,
@@ -42,8 +42,8 @@ const service = {
 };
 
 vi.mock('../services/stockService', () => ({
-  getStockDetails: (...args: any[]) => service.getStockDetails(...args),
-  getHistoricalData: (...args: any[]) => service.getHistoricalData(...args),
+  getStockDetails: (...args: unknown[]) => service.getStockDetails(...args),
+  getHistoricalData: (...args: unknown[]) => service.getHistoricalData(...args),
 }));
 
 const baseProps = {

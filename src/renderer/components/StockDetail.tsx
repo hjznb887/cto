@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { StockDetail as IStockDetail, PricePoint } from '../types/stock';
+import { StockDetail as IStockDetail, PricePoint, Stock } from '../types/stock';
 import { getStockDetails, getHistoricalData, Timeframe } from '../services/stockService';
 
 interface StockDetailProps {
   symbol: string;
   onBack: () => void;
-  onAddToWatchlist: (stock: any) => void;
+  onAddToWatchlist: (stock: Stock) => void;
   onRemoveFromWatchlist: (symbol: string) => void;
   isInWatchlist: boolean;
   onCreateAlert: (symbol: string) => void;

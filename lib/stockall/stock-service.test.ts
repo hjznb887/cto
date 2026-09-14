@@ -2,7 +2,7 @@
 // Tests: Stock Data Fetching Service
 // ============================================================
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { StockService, resetStockService } from "./stock-service";
 
 describe("StockService", () => {

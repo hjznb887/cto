@@ -4,23 +4,10 @@ import StockSearch from './components/StockSearch';
 import StockList from './components/StockList';
 import StockDetail from './components/StockDetail';
 import AlertEditor from './components/AlertEditor';
+import type { AlertRule } from './components/AlertEditor';
 import { getWatchlistStocks } from './services/stockService';
 import { Stock } from './types/stock';
 import './index.css';
-
-// --- Types ---
-interface AlertRule {
-  id: string;
-  symbol: string;
-  type: string;
-  params: any;
-  notifications: {
-    sound: boolean;
-    toast: boolean;
-    email: boolean;
-  };
-  active: boolean;
-}
 
 // --- Dashboard Component ---
 const Dashboard: React.FC<{
@@ -119,9 +106,9 @@ const Dashboard: React.FC<{
                       </div>
                     </div>
                     <div className="text-xs text-slate-300">
-                      {alert.type === 'price_threshold' && `${alert.params.direction.toUpperCase()} $${alert.params.threshold}`}
+                      {alert.type === 'price_threshold' && `${(alert.params.direction ?? '').toUpperCase()} $${alert.params.threshold}`}
                       {alert.type === 'ma_crossover' && `MA ${alert.params.shortPeriod} cross ${alert.params.longPeriod}`}
-                      {alert.type === 'rsi_level' && `RSI ${alert.params.direction.toUpperCase()} ${alert.params.rsiLevel}`}
+                      {alert.type === 'rsi_level' && `RSI ${(alert.params.direction ?? '').toUpperCase()} ${alert.params.rsiLevel}`}
                       {alert.type === 'volume_spike' && `${alert.params.volumeMultiplier}x VOL SPIKE`}
                       {alert.type === 'price_change' && `${alert.params.percentChange}% in ${alert.params.minutes}m`}
                     </div>
@@ -138,7 +125,7 @@ const Dashboard: React.FC<{
 
 // --- Stock Detail Page wrapper ---
 const StockDetailWrapper: React.FC<{
-  onAdd: (stock: any) => void;
+  onAdd: (stock: Stock) => void;
   onRemove: (symbol: string) => void;
   watchlist: Stock[];
 }> = ({ onAdd, onRemove, watchlist }) => {

@@ -9,10 +9,11 @@ class ResizeObserverMock {
 }
 
 if (typeof window !== 'undefined') {
-  (window as any).ResizeObserver = window.ResizeObserver || ResizeObserverMock;
+  const win = window as unknown as Record<string, unknown>;
+  win.ResizeObserver = window.ResizeObserver || ResizeObserverMock;
   // jsdom lacks matchMedia, used by responsive chart containers
   if (!window.matchMedia) {
-    (window as any).matchMedia = (query: string) => ({
+    win.matchMedia = (query: string) => ({
       matches: false,
       media: query,
       onchange: null,

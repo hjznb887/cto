@@ -9,7 +9,6 @@ import type {
   AlertConfig,
   AlertConditionType,
   UserPreferences,
-  Timeframe,
   ExchangeCode,
 } from "./types";
 
