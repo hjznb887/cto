@@ -3,7 +3,7 @@
 // ============================================================
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { StockService, resetStockService } from "../stock-service";
+import { StockService, resetStockService } from "./stock-service";
 
 describe("StockService", () => {
   let service: StockService;
@@ -168,7 +168,7 @@ describe("StockService", () => {
 describe("getStockService singleton", () => {
   it("should import and call getStockService without error", async () => {
     // Dynamic import to avoid circular issues
-    const mod = await import("../stock-service");
+    const mod = await import("./stock-service");
     const svc = mod.getStockService();
     expect(svc).toBeDefined();
     const quote = await svc.fetchQuote("AAPL");

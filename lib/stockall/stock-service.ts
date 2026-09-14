@@ -214,7 +214,9 @@ export class StockService {
     }
 
     // Return demo/mock data when no API key or API call fails
-    return this.generateMockQuote(symbol, exchange || "US");
+    const mock = this.generateMockQuote(symbol, exchange || "US");
+    this.cache.set(cacheKey, mock);
+    return mock;
   }
 
   // ----------------------------------------------------------
@@ -257,7 +259,9 @@ export class StockService {
       }
     }
 
-    return this.generateMockHistorical(symbol, timeframe);
+    const mock = this.generateMockHistorical(symbol, timeframe);
+    this.cache.set(cacheKey, mock);
+    return mock;
   }
 
   // ----------------------------------------------------------

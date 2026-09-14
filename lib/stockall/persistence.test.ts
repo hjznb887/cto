@@ -3,8 +3,8 @@
 // ============================================================
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { InMemoryStore } from "../persistence";
-import type { AlertConfig } from "../types";
+import { InMemoryStore } from "./persistence";
+import type { AlertConfig } from "./types";
 
 describe("InMemoryStore", () => {
   let store: InMemoryStore;
