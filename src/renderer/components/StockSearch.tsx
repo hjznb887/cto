@@ -3,7 +3,7 @@ import { searchStocks } from '../services/stockService';
 import { StockSearchResult } from '../types/stock';
 
 interface StockSearchProps {
-  onSelect: (ticker: string) => void;
+  onSelect: (symbol: string) => void;
 }
 
 const StockSearch: React.FC<StockSearchProps> = ({ onSelect }) => {
@@ -61,15 +61,15 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelect }) => {
         }}>
           {results.map((result) => (
             <li
-              key={result.ticker}
+              key={result.symbol}
               onClick={() => {
-                onSelect(result.ticker);
+                onSelect(result.symbol);
                 setQuery('');
                 setShowResults(false);
               }}
               style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
             >
-              <strong>{result.ticker}</strong> - {result.name} ({result.exchange})
+              <strong>{result.symbol}</strong> - {result.name} ({result.exchange})
             </li>
           ))}
         </ul>
