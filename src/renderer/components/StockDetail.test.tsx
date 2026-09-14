@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import StockDetail from './StockDetail';
+import { t } from '../i18n/messages';
 
 // Mock recharts primitives so the component can render in jsdom without layout
 vi.mock('recharts', () => {
@@ -62,7 +63,7 @@ describe('StockDetail', () => {
 
   it('shows a loading state then renders company info and stats', async () => {
     render(<StockDetail {...baseProps} />);
-    expect(screen.getByText(/Loading stock details/i)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(t('detail.loading'), 'i'))).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Apple Inc. \(AAPL\)/i })).toBeInTheDocument();
@@ -70,12 +71,12 @@ describe('StockDetail', () => {
     expect(screen.getByText(/NASDAQ/)).toBeInTheDocument();
     expect(screen.getByText(/Technology/)).toBeInTheDocument();
     // Key statistics
-    expect(screen.getByText('Open')).toBeInTheDocument();
-    expect(screen.getByText('Close')).toBeInTheDocument();
-    expect(screen.getByText('High')).toBeInTheDocument();
-    expect(screen.getByText('Low')).toBeInTheDocument();
-    expect(screen.getByText('Volume')).toBeInTheDocument();
-    expect(screen.getByText('Market Cap')).toBeInTheDocument();
+    expect(screen.getByText(t('detail.open'))).toBeInTheDocument();
+    expect(screen.getByText(t('detail.close'))).toBeInTheDocument();
+    expect(screen.getByText(t('detail.high'))).toBeInTheDocument();
+    expect(screen.getByText(t('detail.low'))).toBeInTheDocument();
+    expect(screen.getByText(t('detail.volume'))).toBeInTheDocument();
+    expect(screen.getByText(t('detail.marketCap'))).toBeInTheDocument();
     expect(screen.getByText('Apple Inc. designs devices.')).toBeInTheDocument();
   });
 
@@ -98,7 +99,7 @@ describe('StockDetail', () => {
   it('adds to watchlist when not in it', async () => {
     render(<StockDetail {...baseProps} isInWatchlist={false} />);
     await waitFor(() => expect(screen.getByRole('heading', { name: /Apple Inc. \(AAPL\)/i })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Add to Watchlist/i }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('detail.addToWatchlist'), 'i') }));
     expect(baseProps.onAddToWatchlist).toHaveBeenCalledWith(
       expect.objectContaining({ symbol: 'AAPL' })
     );
@@ -107,21 +108,21 @@ describe('StockDetail', () => {
   it('removes from watchlist when in it', async () => {
     render(<StockDetail {...baseProps} isInWatchlist={true} />);
     await waitFor(() => expect(screen.getByRole('heading', { name: /Apple Inc. \(AAPL\)/i })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Remove from Watchlist/i }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('detail.removeFromWatchlist'), 'i') }));
     expect(baseProps.onRemoveFromWatchlist).toHaveBeenCalledWith('AAPL');
   });
 
   it('opens alert creation with the symbol', async () => {
     render(<StockDetail {...baseProps} />);
     await waitFor(() => expect(screen.getByRole('heading', { name: /Apple Inc. \(AAPL\)/i })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Create Alert/i }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('alerts.create'), 'i') }));
     expect(baseProps.onCreateAlert).toHaveBeenCalledWith('AAPL');
   });
 
   it('calls onBack from the back button', async () => {
     render(<StockDetail {...baseProps} />);
     await waitFor(() => expect(screen.getByRole('heading', { name: /Apple Inc. \(AAPL\)/i })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Back to Watchlist/i }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('watchlist.title'), 'i') }));
     expect(baseProps.onBack).toHaveBeenCalledTimes(1);
   });
 });

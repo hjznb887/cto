@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
+import { t } from './i18n/messages';
 
 // Mock the service
 vi.mock('./services/stockService', () => ({
@@ -58,19 +59,19 @@ describe('App', () => {
     await waitFor(() => {
       expect(screen.getByText('TSLA')).toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('alerts.edit') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('alerts.delete') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('alerts.pause') })).toBeInTheDocument();
   });
 
   it('opens the alert editor prefilled when editing an alert', async () => {
     localStorage.setItem('stockall_alerts', JSON.stringify([alertFixture]));
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: t('alerts.edit') })).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
-    expect(await screen.findByRole('heading', { name: 'Edit Alert Rule' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: t('alerts.edit') }));
+    expect(await screen.findByRole('heading', { name: t('editor.editTitle') })).toBeInTheDocument();
     expect(screen.getByText('TSLA')).toBeInTheDocument();
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
   });
@@ -78,9 +79,9 @@ describe('App', () => {
   it('navigates to the create-alert form from an empty dashboard', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Set your first alert/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: new RegExp(t('alerts.createFirst'), 'i') })).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Set your first alert/i }));
-    expect(await screen.findByRole('heading', { name: 'Create New Alert Rule' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(t('alerts.createFirst'), 'i') }));
+    expect(await screen.findByRole('heading', { name: t('editor.createTitle') })).toBeInTheDocument();
   });
 });

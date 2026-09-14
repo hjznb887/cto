@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { searchStocks } from '../services/stockService';
 import { StockSearchResult } from '../types/stock';
+import { useI18n } from '../i18n/useI18n';
 
 interface StockSearchProps {
   onSelect: (symbol: string) => void;
 }
 
 const StockSearch: React.FC<StockSearchProps> = ({ onSelect }) => {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<StockSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,12 +40,12 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelect }) => {
     <div className="stock-search" style={{ position: 'relative', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
       <input
         type="text"
-        placeholder="Search stocks (e.g. AAPL, Apple)..."
+        placeholder={t('search.placeholder')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc' }}
       />
-      {loading && <div style={{ position: 'absolute', right: '10px', top: '8px' }}>Loading...</div>}
+      {loading && <div style={{ position: 'absolute', right: '10px', top: '8px' }}>{t('search.loading')}</div>}
       {showDropdown && results.length > 0 && (
         <ul style={{
           position: 'absolute',

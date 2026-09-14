@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StockDetail as IStockDetail, PricePoint, Stock } from '../types/stock';
 import { getStockDetails, getHistoricalData, Timeframe } from '../services/stockService';
+import { useI18n } from '../i18n/useI18n';
 
 interface StockDetailProps {
   symbol: string;
@@ -20,6 +21,7 @@ const StockDetail: React.FC<StockDetailProps> = ({
   isInWatchlist,
   onCreateAlert
 }) => {
+  const { t } = useI18n();
   const [stock, setStock] = useState<IStockDetail | null>(null);
   const [history, setHistory] = useState<PricePoint[]>([]);
   const [timeframe, setTimeframe] = useState<Timeframe>('1M');
@@ -42,7 +44,7 @@ const StockDetail: React.FC<StockDetailProps> = ({
   if (loading && !stock) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-xl text-gray-400 animate-pulse">Loading stock details...</div>
+        <div className="text-xl text-gray-400 animate-pulse">{t('detail.loading')}</div>
       </div>
     );
   }
@@ -50,8 +52,8 @@ const StockDetail: React.FC<StockDetailProps> = ({
   if (!stock) {
     return (
       <div className="p-4">
-        <button onClick={onBack} className="mb-4 text-blue-400 hover:underline">← Back</button>
-        <div className="text-red-400">Stock not found.</div>
+        <button onClick={onBack} className="mb-4 text-blue-400 hover:underline">{t('detail.back')}</button>
+        <div className="text-red-400">{t('detail.notFound')}</div>
       </div>
     );
   }
@@ -63,7 +65,7 @@ const StockDetail: React.FC<StockDetailProps> = ({
       <div className="flex justify-between items-start mb-6">
         <div>
           <button onClick={onBack} className="mb-2 text-blue-400 hover:text-blue-300 flex items-center transition-colors">
-            <span className="mr-1">←</span> Back to Watchlist
+            <span className="mr-1">←</span> {t('watchlist.title')}
           </button>
           <h1 className="text-3xl font-bold">{stock.name} ({stock.symbol})</h1>
           <p className="text-gray-400">{stock.exchange} • {stock.sector}</p>
@@ -73,7 +75,7 @@ const StockDetail: React.FC<StockDetailProps> = ({
             onClick={() => onCreateAlert(stock.symbol)}
             className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded text-white font-medium transition-colors"
           >
-            🔔 Create Alert
+            🔔 {t('alerts.create')}
           </button>
           <button
             onClick={() => isInWatchlist ? onRemoveFromWatchlist(stock.symbol) : onAddToWatchlist(stock)}
@@ -83,7 +85,7 @@ const StockDetail: React.FC<StockDetailProps> = ({
                 : 'bg-green-600 hover:bg-green-500 text-white'
             }`}
           >
-            {isInWatchlist ? 'Remove from Watchlist' : '+ Add to Watchlist'}
+            {isInWatchlist ? t('detail.removeFromWatchlist') : '+ ' + t('detail.addToWatchlist')}
           </button>
         </div>
       </div>
@@ -150,30 +152,30 @@ const StockDetail: React.FC<StockDetailProps> = ({
         </div>
 
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-          <h2 className="text-xl font-bold mb-4 border-b border-slate-700 pb-2">Key Statistics</h2>
+          <h2 className="text-xl font-bold mb-4 border-b border-slate-700 pb-2">{t('detail.stats')}</h2>
           <div className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-gray-400">Open</span>
+              <span className="text-gray-400">{t('detail.open')}</span>
               <span className="font-semibold">${stock.open.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Close</span>
+              <span className="text-gray-400">{t('detail.close')}</span>
               <span className="font-semibold">${stock.close.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">High</span>
+              <span className="text-gray-400">{t('detail.high')}</span>
               <span className="font-semibold">${stock.high.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Low</span>
+              <span className="text-gray-400">{t('detail.low')}</span>
               <span className="font-semibold">${stock.low.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Volume</span>
+              <span className="text-gray-400">{t('detail.volume')}</span>
               <span className="font-semibold">{stock.volume.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Market Cap</span>
+              <span className="text-gray-400">{t('detail.marketCap')}</span>
               <span className="font-semibold">${(stock.marketCap / 1000000000).toFixed(2)}B</span>
             </div>
           </div>

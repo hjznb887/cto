@@ -8,6 +8,7 @@ import type { AlertRule } from './components/AlertEditor';
 import { getWatchlistStocks } from './services/stockService';
 import { loadWatchlist, saveWatchlist, loadAlerts, saveAlerts } from './services/persistence';
 import { Stock } from './types/stock';
+import { useI18n } from './i18n/useI18n';
 import './index.css';
 
 // --- Dashboard Component ---
@@ -21,15 +22,16 @@ const Dashboard: React.FC<{
   onDeleteAlert: (id: string) => void;
   onToggleAlert: (id: string) => void;
 }> = ({ watchlist, onRemove, onAdd, loading, error, alerts, onDeleteAlert, onToggleAlert }) => {
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   return (
     <div className="max-w-6xl mx-auto">
       <header className="mb-10 text-center">
         <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-indigo-400 to-emerald-400 mb-2 tracking-tight">
-          StockAll
+          {t('app.name')}
         </h1>
-        <p className="text-slate-400 text-lg font-medium">Your intelligent global market companion.</p>
+        <p className="text-slate-400 text-lg font-medium">{t('app.tagline')}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -37,7 +39,7 @@ const Dashboard: React.FC<{
         <div className="lg:col-span-2 space-y-8">
           <section className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/50 backdrop-blur-md shadow-xl">
             <h2 className="text-xl font-bold mb-4 text-white flex items-center">
-              <span className="mr-2 text-2xl">🔍</span> Search Markets
+              <span className="mr-2 text-2xl">🔍</span> {t('search.section')}
             </h2>
             <StockSearch onSelect={onAdd} />
           </section>
@@ -46,7 +48,7 @@ const Dashboard: React.FC<{
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-slate-400 animate-pulse font-medium">Syncing your watchlist...</p>
+                <p className="text-slate-400 animate-pulse font-medium">{t('watchlist.syncing')}</p>
               </div>
             ) : error ? (
               <div className="p-10 text-center">
@@ -60,7 +62,7 @@ const Dashboard: React.FC<{
                 stocks={watchlist} 
                 onRemove={onRemove} 
                 onSelect={(symbol) => navigate(`/stock/${symbol}`)}
-                title="My Watchlist" 
+                title={t('watchlist.title')} 
               />
             )}
           </section>
@@ -71,12 +73,12 @@ const Dashboard: React.FC<{
           <section className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/50 backdrop-blur-md shadow-xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white flex items-center">
-                <span className="mr-2 text-2xl">🔔</span> Active Alerts
+                <span className="mr-2 text-2xl">🔔</span> {t('alerts.title')}
               </h2>
               <button 
                 onClick={() => navigate('/alerts/new')}
                 className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-xl transition-all border border-blue-500/30"
-                title="Create Alert"
+                title={t('alerts.create')}
               >
                 <span className="text-xl">+</span>
               </button>
@@ -85,12 +87,12 @@ const Dashboard: React.FC<{
             <div className="space-y-3">
               {alerts.length === 0 ? (
                 <div className="text-center py-10 px-4 border-2 border-dashed border-slate-700/50 rounded-2xl">
-                  <p className="text-slate-500 text-sm italic">No alerts configured yet.</p>
+                  <p className="text-slate-500 text-sm italic">{t('alerts.empty')}</p>
                   <button 
                     onClick={() => navigate('/alerts/new')}
                     className="mt-4 text-xs font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest"
                   >
-                    Set your first alert
+                    {t('alerts.createFirst')}
                   </button>
                 </div>
               ) : (
@@ -99,11 +101,11 @@ const Dashboard: React.FC<{
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-bold text-blue-400">{alert.symbol}</span>
                       <div className="flex gap-2">
-                        <button onClick={() => navigate(`/alerts/edit/${alert.id}`)} className="text-xs hover:text-blue-400 text-slate-500">Edit</button>
+                        <button onClick={() => navigate(`/alerts/edit/${alert.id}`)} className="text-xs hover:text-blue-400 text-slate-500">{t('alerts.edit')}</button>
                         <button onClick={() => onToggleAlert(alert.id)} className="text-xs hover:text-white text-slate-500">
-                          {alert.active ? 'Pause' : 'Enable'}
+                          {alert.active ? t('alerts.pause') : t('alerts.enable')}
                         </button>
-                        <button onClick={() => onDeleteAlert(alert.id)} className="text-xs hover:text-red-400 text-slate-500">Delete</button>
+                        <button onClick={() => onDeleteAlert(alert.id)} className="text-xs hover:text-red-400 text-slate-500">{t('alerts.delete')}</button>
                       </div>
                     </div>
                     <div className="text-xs text-slate-300">
@@ -177,6 +179,7 @@ const AlertEditWrapper: React.FC<{
   alerts: AlertRule[];
   onSave: (rule: AlertRule) => void;
 }> = ({ alerts, onSave }) => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const rule = alerts.find(a => a.id === id);
@@ -184,12 +187,12 @@ const AlertEditWrapper: React.FC<{
   if (!rule) {
     return (
       <div className="py-20 text-center">
-        <p className="text-slate-400 mb-6">Alert not found. It may have been deleted.</p>
+        <p className="text-slate-400 mb-6">{t('alerts.notFound')}</p>
         <button
           onClick={() => navigate('/')}
           className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors"
         >
-          Back to Dashboard
+          {t('alerts.backHome')}
         </button>
       </div>
     );
@@ -210,6 +213,7 @@ const AlertEditWrapper: React.FC<{
 };
 
 function App() {
+  const { t, locale, setLocale } = useI18n();
   const [watchlist, setWatchlist] = useState<Stock[]>([]);
   const [alerts, setAlerts] = useState<AlertRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -279,6 +283,15 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-white">
+        <div className="flex justify-end px-4 md:px-8 pt-4">
+          <button
+            onClick={() => setLocale(locale === 'zh-CN' ? 'en' : 'zh-CN')}
+            className="text-xs px-3 py-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 border border-slate-700/50 transition-colors"
+            aria-label={t('lang.switch')}
+          >
+            {locale === 'zh-CN' ? 'EN' : '中文'}
+          </button>
+        </div>
         <div className="p-4 md:p-8">
           <Routes>
             <Route path="/" element={

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Stock } from '../types/stock';
+import { useI18n } from '../i18n/useI18n';
 
 interface StockListProps {
   stocks: Stock[];
@@ -11,6 +12,7 @@ interface StockListProps {
 type SortKey = 'symbol' | 'name' | 'price' | 'changePercent';
 
 const StockList: React.FC<StockListProps> = ({ stocks, onRemove, onSelect, title }) => {
+  const { t } = useI18n();
   const [sortKey, setSortKey] = useState<SortKey>('symbol');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -43,11 +45,11 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, onSelect, title
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid #555' }}>
-            <th onClick={() => toggleSort('symbol')} style={{ cursor: 'pointer', padding: '10px' }}>Symbol</th>
-            <th onClick={() => toggleSort('name')} style={{ cursor: 'pointer', padding: '10px' }}>Name</th>
-            <th onClick={() => toggleSort('price')} style={{ cursor: 'pointer', padding: '10px', textAlign: 'right' }}>Price</th>
-            <th onClick={() => toggleSort('changePercent')} style={{ cursor: 'pointer', padding: '10px', textAlign: 'right' }}>Change %</th>
-            {onRemove && <th style={{ padding: '10px' }}>Action</th>}
+            <th onClick={() => toggleSort('symbol')} style={{ cursor: 'pointer', padding: '10px' }}>{t('table.symbol')}</th>
+            <th onClick={() => toggleSort('name')} style={{ cursor: 'pointer', padding: '10px' }}>{t('table.name')}</th>
+            <th onClick={() => toggleSort('price')} style={{ cursor: 'pointer', padding: '10px', textAlign: 'right' }}>{t('table.price')}</th>
+            <th onClick={() => toggleSort('changePercent')} style={{ cursor: 'pointer', padding: '10px', textAlign: 'right' }}>{t('table.changePercent')}</th>
+            {onRemove && <th style={{ padding: '10px' }}>{t('table.action')}</th>}
           </tr>
         </thead>
         <tbody>
@@ -77,7 +79,7 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, onSelect, title
                     }} 
                     style={{ background: 'none', border: 'none', color: '#ff5252', cursor: 'pointer' }}
                   >
-                    Remove
+                    {t('table.remove')}
                   </button>
                 </td>
               )}
@@ -86,7 +88,7 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, onSelect, title
           {stocks.length === 0 && (
             <tr>
               <td colSpan={onRemove ? 5 : 4} style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
-                No stocks in list.
+                {t('watchlist.empty')}
               </td>
             </tr>
           )}
