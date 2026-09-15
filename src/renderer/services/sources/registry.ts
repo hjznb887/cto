@@ -12,11 +12,19 @@
 
 import type { MarketDataSource, SourceId } from './types';
 import { MockDataSource } from './mock';
+import { TencentDataSource } from './tencent';
 
 const registry: MarketDataSource[] = [];
 
-/** Fallback that is always present and always available. */
+/** 回退源：永远存在、永远可用。 */
 const fallback = new MockDataSource();
+
+/**
+ * 默认注册的实时数据源。
+ * 按优先级排列——腾讯在最前，离线 demo 源只作兜底
+ * （由 getActiveSource 在没有可用实时源时选用）。
+ */
+registerSource(new TencentDataSource());
 
 export function registerSource(source: MarketDataSource, options: { priority?: boolean } = {}): void {
   const existing = registry.findIndex((s) => s.id === source.id);
