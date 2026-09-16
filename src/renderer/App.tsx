@@ -57,14 +57,20 @@ const Dashboard: React.FC<{
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Section */}
         <div className="lg:col-span-2 space-y-8">
-          <section className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/50 backdrop-blur-md shadow-xl">
+          {/*
+            relative z-30 是必需的，不是随手加的：
+            backdrop-blur 会创建新的堆叠上下文，把里面的 z-50 下拉菜单
+            困在本区块内。若不给本区块更高的层级，排在后面的自选区块
+            会盖住搜索下拉——实测下拉开在自选表格之上就是这个原因。
+          */}
+          <section className="relative z-30 bg-slate-800/40 p-6 rounded-3xl border border-slate-700/50 backdrop-blur-md shadow-xl">
             <h2 className="text-xl font-bold mb-4 text-white flex items-center">
               <span className="mr-2 text-2xl">🔍</span> {t('search.section')}
             </h2>
             <StockSearch onSelect={onAdd} />
           </section>
           
-          <section className="bg-slate-800/40 rounded-3xl border border-slate-700/50 overflow-hidden backdrop-blur-md shadow-xl">
+          <section className="relative z-0 bg-slate-800/40 rounded-3xl border border-slate-700/50 overflow-hidden backdrop-blur-md shadow-xl">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>

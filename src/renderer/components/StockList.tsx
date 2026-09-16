@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Stock } from '../types/stock';
 import { useI18n } from '../i18n/useI18n';
+import { formatPrice, formatPct, pctColor } from '../utils/format';
 
 interface StockListProps {
   stocks: Stock[];
@@ -62,13 +63,15 @@ const StockList: React.FC<StockListProps> = ({ stocks, onRemove, onSelect, title
             >
               <td style={{ padding: '10px' }}><strong>{stock.symbol}</strong></td>
               <td style={{ padding: '10px' }}>{stock.name}</td>
-              <td style={{ padding: '10px', textAlign: 'right' }}>${stock.price.toFixed(2)}</td>
+              <td style={{ padding: '10px', textAlign: 'right' }}>
+                {formatPrice(stock.price, stock.exchange)}
+              </td>
               <td style={{ 
                 padding: '10px', 
                 textAlign: 'right', 
-                color: stock.change >= 0 ? '#4caf50' : '#f44336' 
+                color: pctColor(stock.changePercent)
               }}>
-                {stock.change >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                {formatPct(stock.changePercent)}
               </td>
               {onRemove && (
                 <td style={{ padding: '10px' }}>

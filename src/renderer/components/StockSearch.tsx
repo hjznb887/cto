@@ -74,8 +74,12 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSelect }) => {
         </div>
       )}
 
+      {/*
+        max-h + overflow-y-auto 是必需的：结果多时下拉会超出窗口底部，
+        加滚动条才能保证每一条都够得着。z-50 配合父区块的 z-30 才生效。
+      */}
       {(showDropdown && results.length > 0) || showEmptyState ? (
-        <ul className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl list-none p-0 m-0 z-50 overflow-hidden">
+        <ul className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl list-none p-0 m-0 z-50 max-h-[320px] overflow-y-auto">
           {results.map((result) => (
             <li key={result.symbol}>
               <button

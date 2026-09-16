@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { StockDetail as IStockDetail, PricePoint, Stock } from '../types/stock';
 import { getStockDetails, getHistoricalData, Timeframe } from '../services/stockService';
 import { useI18n } from '../i18n/useI18n';
+import { formatPrice, formatPct, formatAmount } from '../utils/format';
 
 interface StockDetailProps {
   symbol: string;
@@ -94,9 +95,9 @@ const StockDetail: React.FC<StockDetailProps> = ({
         <div className="lg:col-span-2 bg-slate-800 p-4 rounded-xl border border-slate-700">
           <div className="flex justify-between items-end mb-4">
             <div>
-              <span className="text-4xl font-bold">${stock.price.toFixed(2)}</span>
-              <span className={`ml-3 text-lg font-semibold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                {isPositive ? '+' : ''}{stock.change.toFixed(2)} ({isPositive ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+              <span className="text-4xl font-bold">{formatPrice(stock.price, stock.exchange)}</span>
+              <span className={`ml-3 text-lg font-semibold ${isPositive ? 'text-red-400' : 'text-emerald-400'}`}>
+                {isPositive ? '+' : ''}{stock.change.toFixed(2)} ({formatPct(stock.changePercent)})
               </span>
             </div>
             <div className="flex gap-1 bg-slate-900 p-1 rounded-lg">
@@ -156,36 +157,41 @@ const StockDetail: React.FC<StockDetailProps> = ({
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-gray-400">{t('detail.open')}</span>
-              <span className="font-semibold">${stock.open.toFixed(2)}</span>
+              <span className="font-semibold">{formatPrice(stock.open, stock.exchange)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">{t('detail.close')}</span>
-              <span className="font-semibold">${stock.close.toFixed(2)}</span>
+              <span className="font-semibold">{formatPrice(stock.close, stock.exchange)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">{t('detail.high')}</span>
-              <span className="font-semibold">${stock.high.toFixed(2)}</span>
+              <span className="font-semibold">{formatPrice(stock.high, stock.exchange)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">{t('detail.low')}</span>
-              <span className="font-semibold">${stock.low.toFixed(2)}</span>
+              <span className="font-semibold">{formatPrice(stock.low, stock.exchange)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">{t('detail.volume')}</span>
               <span className="font-semibold">{stock.volume.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">{t('detail.marketCap')}</span>
-              <span className="font-semibold">${(stock.marketCap / 1000000000).toFixed(2)}B</span>
-            </div>
+            {stock.marketCap > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">{t('detail.marketCap')}</span>
+                <span className="font-semibold">{formatAmount(stock.marketCap)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-        <h2 className="text-xl font-bold mb-3">About {stock.name}</h2>
-        <p className="text-gray-300 leading-relaxed leading-7">{stock.description}</p>
-      </div>
+      {/* 行情接口不提供公司简介，没有内容时整块隐藏，避免出现空白标题 */}
+      {stock.description && (
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+          <h2 className="text-xl font-bold mb-3">{t('detail.about')} {stock.name}</h2>
+          <p className="text-gray-300 leading-relaxed leading-7">{stock.description}</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '../i18n/useI18n';
+import { pctColorClass as pctClass, formatPct as fmtPct, formatAmount as fmtAmount } from '../utils/format';
 import {
   fetchSectorRanking,
   fetchMarketBreadth,
@@ -10,24 +11,6 @@ import {
   type MarketBreadth,
   type TurnoverRow,
 } from '../services/marketFlow';
-
-/** 涨跌着色：A 股习惯，红涨绿跌。 */
-function pctClass(v: number): string {
-  if (v > 0) return 'text-red-400';
-  if (v < 0) return 'text-emerald-400';
-  return 'text-slate-400';
-}
-
-function fmtPct(v: number): string {
-  return `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
-}
-
-/** 成交额按量级折算，避免一长串数字。 */
-function fmtAmount(v: number): string {
-  if (v >= 1e8) return `${(v / 1e8).toFixed(1)} 亿`;
-  if (v >= 1e4) return `${(v / 1e4).toFixed(1)} 万`;
-  return v.toFixed(0);
-}
 
 const MarketFlow: React.FC = () => {
   const { t } = useI18n();

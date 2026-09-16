@@ -51,6 +51,7 @@ const zhCN = {
   'detail.removeFromWatchlist': '移出自选',
   'detail.createAlert': '创建预警',
   'detail.chart': '价格走势',
+  'detail.about': '公司简介',
 
   // 预警
   'alerts.title': '预警规则',
@@ -179,6 +180,7 @@ const en: Record<MessageKey, string> = {
   'detail.removeFromWatchlist': 'Remove from Watchlist',
   'detail.createAlert': 'Create Alert',
   'detail.chart': 'Price history',
+  'detail.about': 'About',
   'alerts.title': 'Active Alerts',
   'alerts.empty': 'No alerts configured yet.',
   'alerts.createFirst': 'Set your first alert',
