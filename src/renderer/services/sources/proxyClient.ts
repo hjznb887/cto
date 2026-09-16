@@ -16,6 +16,8 @@ const UPSTREAM = {
   search: 'https://smartbox.gtimg.cn/s3/',
   quote: 'https://qt.gtimg.cn/q=',
   kline: 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get',
+  /** 板块 / 市场统计 */
+  finance: 'https://proxy.finance.qq.com',
 } as const;
 
 let proxyPort: number | null = null;

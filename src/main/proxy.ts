@@ -23,6 +23,8 @@ const ALLOWED_HOSTS = new Set([
   'smartbox.gtimg.cn',
   'qt.gtimg.cn',
   'web.ifzq.gtimg.cn',
+  // 板块/市场统计
+  'proxy.finance.qq.com',
 ]);
 
 /** 上游请求超时（毫秒）。 */

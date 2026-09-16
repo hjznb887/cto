@@ -5,11 +5,31 @@ import StockList from './components/StockList';
 import StockDetail from './components/StockDetail';
 import AlertEditor from './components/AlertEditor';
 import type { AlertRule } from './components/AlertEditor';
+import MarketFlow from './components/MarketFlow';
 import { getWatchlistStocks } from './services/stockService';
 import { loadWatchlist, saveWatchlist, loadAlerts, saveAlerts } from './services/persistence';
 import { Stock } from './types/stock';
 import { useI18n } from './i18n/useI18n';
 import './index.css';
+
+// --- Nav item ---
+const NavLink: React.FC<{ to: string; label: string }> = ({ to, label }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const active = location.pathname === to;
+  return (
+    <button
+      onClick={() => navigate(to)}
+      className={`text-sm px-4 py-2 rounded-xl transition-colors ${
+        active
+          ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40'
+          : 'text-slate-400 hover:text-slate-200 border border-transparent'
+      }`}
+    >
+      {label}
+    </button>
+  );
+};
 
 // --- Dashboard Component ---
 const Dashboard: React.FC<{
@@ -283,7 +303,11 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-white">
-        <div className="flex justify-end px-4 md:px-8 pt-4">
+        <div className="flex justify-between items-center px-4 md:px-8 pt-5">
+          <nav className="flex gap-1">
+            <NavLink to="/" label={t('nav.watchlist')} />
+            <NavLink to="/market" label={t('nav.market')} />
+          </nav>
           <button
             onClick={() => setLocale(locale === 'zh-CN' ? 'en' : 'zh-CN')}
             className="text-xs px-3 py-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 border border-slate-700/50 transition-colors"
@@ -294,6 +318,7 @@ function App() {
         </div>
         <div className="p-4 md:p-8">
           <Routes>
+            <Route path="/market" element={<MarketFlow />} />
             <Route path="/" element={
               <Dashboard 
                 watchlist={watchlist} 
