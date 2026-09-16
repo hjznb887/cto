@@ -20,9 +20,11 @@ import type { Stock, StockSearchResult, StockDetail, PricePoint } from '../../ty
 import type { MarketDataSource, Timeframe } from './types';
 import { TIMEFRAME_SHAPE } from './types';
 import { matchSeeds } from './seeds';
+import { proxyText, hasProxy, resolveProxyPort } from './proxyClient';
 
 const QUOTE_URL = 'https://qt.gtimg.cn/q=';
 const KLINE_URL = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get';
+const SEARCH_URL = 'https://smartbox.gtimg.cn/s3/';
 
 const HEADERS: Record<string, string> = {
   // 接口对来源有校验，缺少 Referer 可能被拒
@@ -54,6 +56,16 @@ async function fetchText(url: string, timeoutMs = 8000, decode: ByteDecoder = gb
 function num(v: unknown): number {
   const n = parseFloat(String(v ?? ''));
   return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * 腾讯搜索接口把中文名编码成 \uXXXX 转义（纯 ASCII），
+ * 需要显式还原才能得到可读的中文名。
+ */
+function decodeUnicodeEscapes(s: string): string {
+  return s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
 }
 
 /**
@@ -185,7 +197,7 @@ export class TencentDataSource implements MarketDataSource {
   }
 
   // ------------------------------------------------------------
-  // 搜索：本地代码表匹配 → 行情接口验证
+  // 搜索：优先走本地代理（全市场），拿不到再退回内置表
   // ------------------------------------------------------------
   async search(query: string): Promise<StockSearchResult[]> {
     const q = query.trim();
@@ -194,11 +206,59 @@ export class TencentDataSource implements MarketDataSource {
     const cached = this.searchCache.get(q.toLowerCase());
     if (cached && Date.now() - cached.at < this.cacheTtlMs) return cached.data;
 
+    // ① 代理可用 → 走腾讯官方搜索，覆盖全市场
+    const viaProxy = await this.searchViaProxy(q);
+    if (viaProxy.length > 0) {
+      this.searchCache.set(q.toLowerCase(), { at: Date.now(), data: viaProxy });
+      return viaProxy;
+    }
+
+    // ② 退回内置表 + 行情验证
+    const local = await this.searchViaLocalTable(q);
+    this.searchCache.set(q.toLowerCase(), { at: Date.now(), data: local });
+    return local;
+  }
+
+  /** 经本地代理调用腾讯搜索接口，覆盖全市场。 */
+  private async searchViaProxy(q: string): Promise<StockSearchResult[]> {
+    await resolveProxyPort();
+    if (!hasProxy()) return [];
+
+    const url = `${SEARCH_URL}?v=2&q=${encodeURIComponent(q)}&t=all`;
+    const text = await proxyText(url);
+    if (!text) return [];
+
+    const eq = text.indexOf('="');
+    if (eq === -1) return [];
+    const payload = text.slice(eq + 2).replace(/"[\s;]*$/, '');
+    if (!payload) return [];
+
+    const out: StockSearchResult[] = [];
+    for (const entry of payload.split('^')) {
+      const parts = entry.split('~');
+      if (parts.length < 5) continue;
+      const [market, code, name, , kind] = parts as [string, string, string, string, string];
+      // 只保留可交易股票，过滤基金/指数/债券
+      if (!/^GP/.test(kind)) continue;
+
+      const prefix = market.toLowerCase();
+      const bare = code.split('.')[0];
+      out.push({
+        symbol: bare.toUpperCase(),
+        name: decodeUnicodeEscapes(name),
+        exchange: prefix.toUpperCase(),
+      });
+      if (out.length >= 20) break;
+    }
+    return out;
+  }
+
+  /** 退回内置股票表，再用行情接口补真实名称。 */
+  private async searchViaLocalTable(q: string): Promise<StockSearchResult[]> {
     const seeds = matchSeeds(q);
     const out: StockSearchResult[] = [];
 
     if (seeds.length > 0) {
-      // 一次批量取回真实价格与官方名称
       const rows = await this.quoteRows(seeds.map((s) => s.code));
       for (const seed of seeds) {
         const row = rows[seed.code];
@@ -209,7 +269,7 @@ export class TencentDataSource implements MarketDataSource {
       }
     }
 
-    // 本地表没命中，但输入像代码 → 直接查一次
+    // 内置表没命中，但输入像代码 → 直接查一次
     if (out.length === 0) {
       const code = toTencentCode(q);
       const rows = await this.quoteRows([code]);
@@ -219,8 +279,6 @@ export class TencentDataSource implements MarketDataSource {
         if (d) out.push({ symbol: d.symbol, name: d.name, exchange: d.exchange });
       }
     }
-
-    this.searchCache.set(q.toLowerCase(), { at: Date.now(), data: out });
     return out;
   }
 

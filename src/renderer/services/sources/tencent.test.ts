@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { TencentDataSource, toTencentCode } from './tencent';
 import { matchSeeds, looksLikeCode, STOCK_SEEDS } from './seeds';
+import { resetProxyState } from './proxyClient';
 
 /**
  * 用抓取保存的真实响应样本验证解析逻辑，不发起网络请求。
@@ -45,8 +46,16 @@ function mockFetch(text: string) {
 const utf8Decoder = (bytes: ArrayBuffer) => new TextDecoder('utf-8').decode(bytes);
 const makeSource = () => new TencentDataSource(utf8Decoder);
 
+beforeEach(() => {
+  // 每个用例都从「无代理」开始：
+  // 否则测试间会互相污染（前一个用例起的代理服务会被后一个探测到）。
+  resetProxyState();
+  vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.reject(new Error('no proxy')));
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
+  resetProxyState();
 });
 
 describe('代码转换 toTencentCode', () => {
@@ -188,10 +197,12 @@ describe('搜索（本地表 + 行情验证）', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('行情请求会带上本地命中项的代码', async () => {
+  it('无代理时退回本地表，并用行情接口校验代码', async () => {
     const spy = mockFetch(QUOTE_JSON);
     vi.stubGlobal('fetch', spy);
-    await makeSource().search('茅台');
+    const out = await makeSource().search('茅台');
+    // 代理不可用时不应静默返回空——本地表须兜住
+    expect(out.length).toBeGreaterThan(0);
     expect(String(spy.mock.calls[0][0])).toContain('sh600519');
   });
 });
