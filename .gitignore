@@ -21,3 +21,5 @@ dist/
 # untracked files, so the existing code survived — but any NEW file added
 # under lib/ would have been silently dropped. `app/` was deleted as dead
 # code, so neither entry is needed anymore.
+# 临时调试脚本
+_*.cjs
